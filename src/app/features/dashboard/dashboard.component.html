@@ -1,0 +1,201 @@
+<div class="dashboard">
+    <div class="topbar">
+        <div class="topbar-title">Overview</div>
+        <div class="topbar-right">
+            <span class="date-badge">{{ today | date:'MMM yyyy' }}</span>
+            <button class="btn-sm" (click)="openModal()">+ Add transaction</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <ng-container *ngIf="isLoading">
+            <div class="skeleton ticker-skeleton"></div>
+            <div class="skeleton-grid">
+                <div class="skeleton stat-skeleton"></div>
+                <div class="skeleton stat-skeleton"></div>
+                <div class="skeleton stat-skeleton"></div>
+            </div>
+            <div class="skeleton chart-skeleton"></div>
+            <div class="skeleton tx-skeleton"></div>
+        </ng-container>
+
+        <div class="error-banner" *ngIf="error && !isLoading">
+            <span>{{ error }}</span>
+            <button (click)="load()">Retry</button>
+        </div>
+
+        <ng-container *ngIf="stats">
+
+            <div class="ticker-bar">
+                <div>
+                    <div class="ticker-label">Net balance</div>
+                    <div class="ticker-value">R {{ stats.balance | number:'1.2-2' }}</div>
+                    <span class="ticker-change" *ngIf="stats.balanceChangePercent !== null">
+                        {{ stats.balanceChangePercent >= 0 ? '▲' : '▼' }}
+                        {{ stats.balanceChangePercent | number:'1.1-1' }}% vs last month
+                    </span>
+                </div>
+                <div class="ticker-divider"></div>
+                <div>
+                    <div class="ticker-label">Total income</div>
+                    <div class="ticker-value neutral">R {{ stats.totalIncome | number:'1.2-2' }}</div>
+                </div>
+                <div class="ticker-divider"></div>
+                <div>
+                    <div class="ticker-label">Total expenses</div>
+                    <div class="ticker-value red">R {{ stats.totalExpenses | number:'1.2-2' }}</div>
+                </div>
+            </div>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-card-label">
+                        Savings rate
+                        <div class="stat-dot" style="background: var(--green)"></div>
+                    </div>
+                    <div class="stat-value" style="color: var(--green)">
+                        {{ stats.savingsRate | number:'1.1-1' }}%
+                    </div>
+                    <div class="stat-sub">{{ getSavingsRateLabel() }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">
+                        Transactions
+                        <div class="stat-dot" style="background: var(--blue)"></div>
+                    </div>
+                    <div class="stat-value" style="color: var(--text)">{{ stats.transactionCount }}</div>
+                    <div class="stat-sub">This month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">
+                        Largest expense
+                        <div class="stat-dot" style="background: var(--red)"></div>
+                    </div>
+                    <ng-container *ngIf="stats.largestExpense; else noExpense">
+                        <div class="stat-value" style="color: var(--red); font-size: 16px">
+                            R {{ stats.largestExpense.amount | number:'1.0-0' }}
+                        </div>
+                        <div class="stat-sub">
+                            {{ stats.largestExpense.category }} · {{ stats.largestExpense.date | date:'MMM d' }}
+                        </div>
+                    </ng-container>
+                    <ng-template #noExpense>
+                        <div class="stat-value">—</div>
+                        <div class="stat-sub">No expenses yet</div>
+                    </ng-template>
+                </div>
+            </div>
+
+            <div class="chart-row">
+                <div class="chart-card">
+                    <div class="chart-title">Income vs expenses — last 6 months</div>
+                    <div class="chart-area">
+                        <ng-container *ngFor="let m of monthlyChart; trackBy: trackByMonth">
+                            <div style="flex:1">
+                                <div class="bar" [style.height]="getBarHeight(m.income)"
+                                    [class.bar-current]="m.isCurrent" [title]="'Income: R ' + m.income">
+                                </div>
+                                <div class="bar-label">{{ m.month }}</div>
+                            </div>
+                            <div style="flex:1">
+                                <div class="bar expense" [style.height]="getBarHeight(m.expenses)"
+                                    [title]="'Expenses: R ' + m.expenses">
+                                </div>
+                                <div class="bar-label">{{ m.month }}</div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-title">Spending by category</div>
+                    <div class="donut-wrap" *ngIf="categoryBreakdown.length; else noCategories">
+                        <div class="donut" [style.background]="getDonutGradient()"></div>
+                        <div class="donut-legend">
+                            <div class="legend-item" *ngFor="let c of categoryBreakdown; trackBy: trackByCategory">
+                                <div class="legend-dot" [style.background]="c.color"></div>
+                                {{ c.category }}
+                            </div>
+                        </div>
+                    </div>
+                    <ng-template #noCategories>
+                        <div class="empty-chart">No expense data this month</div>
+                    </ng-template>
+                </div>
+            </div>
+
+            <div class="tx-card">
+                <div class="tx-header">
+                    <span>Recent transactions</span>
+                    <a routerLink="/transactions" class="view-all">View all →</a>
+                </div>
+
+                <div *ngIf="recentTransactions.length === 0" class="empty-state">
+                    No transactions yet.
+                    <button class="link-btn" (click)="openModal()">Add one →</button>
+                </div>
+
+                <div *ngFor="let tx of recentTransactions; trackBy: trackById" class="tx-row">
+                    <div class="tx-icon" [style.background]="getCategoryBg(tx.category)">
+                        {{ getCategoryEmoji(tx.category) }}
+                    </div>
+                    <div class="tx-info">
+                        <div class="tx-name">{{ tx.description }}</div>
+                        <div class="tx-meta">{{ tx.date | date:'MMM d' }} · {{ tx.category }}</div>
+                    </div>
+                    <div class="tx-cat" [style.background]="getCategoryBg(tx.category)"
+                        [style.color]="getCategoryColor(tx.category)">
+                        {{ tx.category }}
+                    </div>
+                    <div class="tx-amount" [class]="tx.type">
+                        {{ tx.type === 'income' ? '+' : '−' }}R {{ tx.amount | number:'1.0-0' }}
+                    </div>
+                </div>
+            </div>
+
+        </ng-container>
+    </div>
+
+    <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <span class="modal-title">New transaction</span>
+                <button class="modal-close" (click)="closeModal()">✕</button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="modal-field">
+                    <label>Type</label>
+                    <div class="type-toggle">
+                        <button *ngFor="let type of ['expense', 'income']" class="type-btn"
+                            [class.active-expense]="selectedType === 'expense' && type === 'expense'"
+                            [class.active-income]="selectedType === 'income' && type === 'income'"
+                            (click)="setType(type === 'expense' ? 'expense' : 'income')">
+                            {{ type | titlecase }}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-field" *ngFor="let field of fields">
+                    <label [for]="field.key">{{ field.label }}</label>
+                    <input [id]="field.key" [formControl]="$any(form.get(field.key))" [type]="field.type"
+                        [placeholder]="field.placeholder" class="modal-input"
+                        [class.error]="form.get(field.key)?.invalid && form.get(field.key)?.touched" />
+                    <span class="field-error" *ngIf="form.get(field.key)?.invalid && form.get(field.key)?.touched">
+                        {{ field.label }} is required
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+                <button class="btn-confirm" (click)="submitTransaction()">Save transaction</button>
+            </div>
+
+        </div>
+    </div>
+
+</div>

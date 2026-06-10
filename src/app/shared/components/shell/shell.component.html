@@ -1,0 +1,45 @@
+<div class="shell">
+  <div class="mobile-topbar">
+    <div class="sidebar-logo">fin/track</div>
+    <button class="hamburger" (click)="menuOpen = !menuOpen" [class.open]="menuOpen">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <div class="sidebar-overlay" *ngIf="menuOpen" (click)="menuOpen = false"></div>
+
+  <aside class="sidebar" [class.open]="menuOpen">
+    <div class="sidebar-logo">fin/track</div>
+    <nav class="sidebar-nav">
+      <a *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="active" class="nav-item"
+        (click)="menuOpen = false">
+        <span class="nav-icon">{{ item.icon }}</span>{{ item.label }}
+      </a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" *ngIf="user$ | async as user">
+        <div class="avatar">{{ user.email[0].toUpperCase() }}</div>
+        <div class="user-info">
+          <div class="user-name">{{ user.email }}</div>
+          <div class="user-role">Personal</div>
+        </div>
+      </div>
+      <button class="logout-btn" (click)="logout()">
+        <span class="nav-icon">⇐</span> Sign out
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <nav class="bottom-nav">
+    <a *ngFor="let item of navItems" [routerLink]="item.route" routerLinkActive="active" class="bottom-nav-item">
+      <span class="bottom-nav-icon">{{ item.icon }}</span>
+      <span class="bottom-nav-label">{{ item.label }}</span>
+    </a>
+  </nav>
+
+</div>

@@ -1,12 +1,25 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideStore } from '@ngrx/store';
+import { provideEffects } from '@ngrx/effects';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 import { routes } from './app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { reducers } from './store';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { TransactionEffects } from './features/transactions/store/transaction.effects';
+import { BudgetEffects } from './features/budgets/store/budget.effect';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideRouter(routes), provideClientHydration(withEventReplay())
+    provideRouter(routes),
+    provideHttpClient(withInterceptors([authInterceptor])),
+    provideAnimations(),
+    provideStore(reducers),
+    provideEffects([TransactionEffects]),
+    provideEffects([TransactionEffects, BudgetEffects]),
+    provideStoreDevtools({ maxAge: 25, logOnly: false }),
   ]
 };

@@ -1,0 +1,137 @@
+<div class="transactions">
+  <div class="topbar">
+    <div class="topbar-title">Transactions</div>
+    <div class="topbar-right">
+      <button class="btn-sm" (click)="openModal()">+ Add transaction</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="ticker-bar" *ngIf="balance$ | async as balance">
+      <div class="ticker-item">
+        <div class="ticker-label">Current balance</div>
+        <div class="ticker-value" [class.green]="balance >= 0" [class.red]="balance < 0">
+          R {{ balance | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" type="text" placeholder="Search transactions..." (input)="onSearch($event)" />
+      </div>
+
+      <div class="filter-tabs">
+        <button *ngFor="let f of filterOptions" class="filter-tab" [class.active]="filterType === f.value"
+          (click)="setFilter(f.value)">
+          {{ f.label }}
+        </button>
+      </div>
+
+      <div class="sort-wrap">
+        <span class="sort-label">Sort by</span>
+        <button class="sort-btn" [class.active]="sortField === 'date'" (click)="setSort('date')">Date</button>
+        <button class="sort-btn" [class.active]="sortField === 'amount'" (click)="setSort('amount')">Amount</button>
+      </div>
+
+    </div>
+
+    <ng-container *ngIf="loading$ | async">
+      <div class="skeleton tx-skeleton" *ngFor="let i of [1,2,3,4,5]"></div>
+    </ng-container>
+
+    <ng-container *ngIf="transactions$ | async as transactions">
+
+      <ng-container *ngIf="!(loading$ | async)">
+
+        <div class="empty-state" *ngIf="transactions.length === 0">
+          No transactions yet.
+          <button class="link-btn" (click)="openModal()">Add your first one →</button>
+        </div>
+
+        <div class="tx-card" *ngIf="transactions.length > 0">
+          <ng-container *ngFor="let tx of getFiltered(transactions); trackBy: trackById">
+            <div class="tx-row">
+              <div class="tx-icon" [style.background]="getCategoryBg(tx.category)">
+                {{ getCategoryEmoji(tx.category) }}
+              </div>
+              <div class="tx-info">
+                <div class="tx-name">{{ tx.description }}</div>
+                <div class="tx-meta">
+                  {{ tx.date | date:'MMM d, yyyy' }} · {{ tx.category }}
+                </div>
+              </div>
+              <div class="tx-cat" [style.background]="getCategoryBg(tx.category)"
+                [style.color]="getCategoryColor(tx.category)">
+                {{ tx.category }}
+              </div>
+              <div class="tx-amount" [class]="tx.type">
+                {{ tx.type === 'income' ? '+' : '−' }}R {{ tx.amount | number:'1.0-0' }}
+              </div>
+              <button class="delete-btn" (click)="deleteTransaction(tx.id)">✕</button>
+            </div>
+          </ng-container>
+
+          <div class="no-results" *ngIf="getFiltered(transactions).length === 0 && transactions.length > 0">
+            No transactions match your filter.
+          </div>
+        </div>
+
+      </ng-container>
+    </ng-container>
+
+  </div>
+
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <span class="modal-title">New transaction</span>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-field">
+          <label>Type</label>
+          <div class="type-toggle">
+            <button *ngFor="let type of ['expense', 'income']" class="type-btn"
+              [class.active-expense]="selectedType === 'expense' && type === 'expense'"
+              [class.active-income]="selectedType === 'income' && type === 'income'"
+              (click)="setType(type === 'expense' ? 'expense' : 'income')">
+              {{ type | titlecase }}
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-field" *ngFor="let field of fields">
+          <label [for]="field.key">{{ field.label }}</label>
+          <input [id]="field.key" [formControl]="$any(form.get(field.key))" [type]="field.type"
+            [placeholder]="field.placeholder" class="modal-input"
+            [class.error]="form.get(field.key)?.invalid && form.get(field.key)?.touched" />
+          <span class="field-error" *ngIf="form.get(field.key)?.invalid && form.get(field.key)?.touched">
+            {{ field.label }} is required
+          </span>
+        </div>
+
+        <div class="modal-field">
+          <label for="category">Category</label>
+          <select id="category" [formControl]="$any(form.get('category'))" class="modal-input">
+            <option *ngFor="let cat of categories" [value]="cat.value">
+              {{ cat.emoji }} {{ cat.label }}
+            </option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+        <button class="btn-confirm" (click)="submitTransaction()">Save transaction</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>

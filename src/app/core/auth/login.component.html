@@ -1,0 +1,35 @@
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-logo">fin/track</div>
+            <p class="login-sub">{{ isSignUp ? 'Create your account' : 'Sign in to your dashboard' }}</p>
+        </div>
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <div class="field" *ngFor="let field of fields">
+                <label [for]="field.key">{{ field.label }}</label>
+                <input [id]="field.key" [formControlName]="field.key" [type]="field.type"
+                    [placeholder]="field.placeholder" [class.error]="!!getError(field.key)" />
+                <span class="field-error" *ngIf="getError(field.key)">
+                    {{ getError(field.key) }}
+                </span>
+            </div>
+
+            <div class="form-error" *ngIf="errorMessage">
+                {{ errorMessage }}
+            </div>
+            <div class="success-message" *ngIf="successMessage">
+                {{ successMessage }}
+            </div>
+            <button type="submit" class="btn-primary" [disabled]="isLoading">
+                {{ isLoading ? 'Please wait...' : isSignUp ? 'Create account' : 'Sign in' }}
+            </button>
+        </form>
+        <div class="auth-toggle">
+            {{ isSignUp ? 'Already have an account?' : "Don't have an account?" }}
+            <button type="button" class="btn-link" (click)="toggleMode()">
+                {{ isSignUp ? 'Sign in' : 'Sign up' }}
+            </button>
+        </div>
+
+    </div>
+</div>

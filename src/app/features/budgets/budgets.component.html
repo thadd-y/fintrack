@@ -1,0 +1,124 @@
+<div class="budgets">
+    <div class="topbar">
+        <div class="topbar-title">Budgets</div>
+        <div class="topbar-right">
+            <span class="date-badge">{{ today | date:'MMM yyyy' }}</span>
+            <button class="btn-sm" (click)="openModal()">+ New budget</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <ng-container *ngIf="isLoading">
+            <div class="skeleton ticker-skeleton"></div>
+            <div class="skeleton-grid">
+                <div class="skeleton budget-skeleton"></div>
+                <div class="skeleton budget-skeleton"></div>
+                <div class="skeleton budget-skeleton"></div>
+                <div class="skeleton budget-skeleton"></div>
+            </div>
+        </ng-container>
+
+        <div class="error-banner" *ngIf="error && !isLoading">
+            <span>{{ error }}</span>
+            <button (click)="load()">Retry</button>
+        </div>
+
+        <ng-container *ngIf="summary && !isLoading">
+            <div class="ticker-bar">
+                <div>
+                    <div class="ticker-label">Total budgeted</div>
+                    <div class="ticker-value neutral">R {{ summary.totalBudgeted | number:'1.2-2' }}</div>
+                </div>
+                <div class="ticker-divider"></div>
+                <div>
+                    <div class="ticker-label">Spent so far</div>
+                    <div class="ticker-value amber">R {{ summary.totalSpent | number:'1.2-2' }}</div>
+                </div>
+                <div class="ticker-divider"></div>
+                <div>
+                    <div class="ticker-label">Remaining</div>
+                    <div class="ticker-value green">R {{ summary.remaining | number:'1.2-2' }}</div>
+                </div>
+            </div>
+
+            <div class="empty-state" *ngIf="summary.budgets.length === 0">
+                <p>No budgets set up yet.</p>
+                <button class="btn-sm" (click)="openModal()">Create your first budget</button>
+            </div>
+
+            <div class="budget-grid" *ngIf="summary.budgets.length > 0">
+                <div class="budget-card" *ngFor="let budget of summary.budgets; trackBy: trackById">
+                    <div class="budget-top">
+                        <div>
+                            <div class="budget-name">{{ budget.name }}</div>
+                            <div class="budget-period">{{ budget.period | titlecase }}</div>
+                        </div>
+                        <div class="budget-right">
+                            <div class="budget-pct" [style.color]="getStatusColor(budget.status)">
+                                {{ budget.percentage }}%
+                            </div>
+                            <button class="delete-btn" (click)="removeBudget(budget.id)" title="Remove budget">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="progress-track">
+                        <div class="progress-fill" [style.width]="getProgressWidth(budget.percentage)"
+                            [style.background]="getStatusColor(budget.status)"></div>
+                    </div>
+
+                    <div class="budget-amounts">
+                        <span [style.color]="budget.status === 'over' ? 'var(--red)' : 'var(--muted)'">
+                            R {{ budget.spent | number:'1.0-0' }} spent
+                        </span>
+                        <span>R {{ budget.limit | number:'1.0-0' }} limit</span>
+                    </div>
+
+                    <div class="over-badge" *ngIf="budget.status === 'over'">
+                        Over budget by R {{ (budget.spent - budget.limit) | number:'1.0-0' }}
+                    </div>
+                </div>
+            </div>
+
+        </ng-container>
+    </div>
+
+    <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+
+            <div class="modal-header">
+                <span class="modal-title">New budget</span>
+                <button class="modal-close" (click)="closeModal()">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-field">
+                    <label>Period</label>
+                    <div class="type-toggle">
+                        <button *ngFor="let p of periods" class="type-btn" [class.active]="selectedPeriod === p"
+                            (click)="setPeriod(p)">
+                            {{ p | titlecase }}
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-field" *ngFor="let field of fields">
+                    <label [for]="field.key">{{ field.label }}</label>
+                    <input [id]="field.key" [formControl]="$any(form.get(field.key))" [type]="field.type"
+                        [placeholder]="field.placeholder" class="modal-input"
+                        [class.error]="form.get(field.key)?.invalid && form.get(field.key)?.touched" />
+                    <span class="field-error" *ngIf="form.get(field.key)?.invalid && form.get(field.key)?.touched">
+                        {{ field.label }} is required
+                    </span>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" (click)="closeModal()">Cancel</button>
+                <button class="btn-confirm" (click)="submitBudget()">Save budget</button>
+            </div>
+        </div>
+    </div>
+
+</div>

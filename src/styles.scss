@@ -1,1 +1,84 @@
-/* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface2: #f7f8fa;
+    --border: #e8eaed;
+    --border2: #d1d5db;
+    --green: #00a572;
+    --green-dim: #00a57212;
+    --green-mid: #00a57228;
+    --red: #e03050;
+    --red-dim: #e0305010;
+    --amber: #d97706;
+    --amber-dim: #d9770610;
+    --blue: #2563eb;
+    --blue-dim: #2563eb10;
+    --text: #0f1117;
+    --muted: #6b7280;
+    --muted2: #9ca3af;
+    --sidebar-bg: #f9fafb;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: var(--sans);
+    color: var(--text);
+    background: #f0f2f5;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.mono {
+    font-family: var(--mono);
+}
+
+.text-green {
+    color: var(--green);
+}
+
+.text-red {
+    color: var(--red);
+}
+
+.text-muted {
+    color: var(--muted);
+}
+
+.text-amber {
+    color: var(--amber);
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border2);
+    border-radius: 4px;
+}
